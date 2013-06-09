@@ -538,8 +538,7 @@ a.hide-announcement {
 :root.fit-width .full-image {
   max-width: 100%;
 }
-:root.gecko.fit-width .full-image,
-:root.presto.fit-width .full-image {
+:root.gecko.fit-width .full-image {
   width: 100%;
 }
 #ihover {
@@ -612,9 +611,6 @@ a.hide-announcement {
 #qr option {
   color: #000;
   background-color: #F7F7F7;
-}
-.presto #qr select {
-  height: 1em;
 }
 #qr .close {
   padding: 0 3px;

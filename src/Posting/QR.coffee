@@ -333,7 +333,6 @@ QR =
 
     text = ">>#{post}\n"
     if (s = sel.toString().trim()) and post.nodes.root is selectionRoot
-      # XXX Opera doesn't retain `\n`s?
       s = s.replace /\n/g, '\n>'
       text += ">#{s}\n"
 
@@ -504,7 +503,6 @@ QR =
       else if @ is QR.selected
         (QR.posts[index-1] or QR.posts[index+1]).select()
       QR.posts.splice index, 1
-      return unless window.URL
       URL.revokeObjectURL @URL
     lock: (lock=true) ->
       @isLocked = lock
@@ -561,25 +559,14 @@ QR =
       @filename           = "#{file.name} (#{$.bytesToString file.size})"
       @nodes.el.title     = @filename
       @nodes.label.hidden = false if QR.spoiler
-      URL.revokeObjectURL @URL if window.URL
+      URL.revokeObjectURL @URL
       @showFileData()
       unless /^image/.test file.type
         @nodes.el.style.backgroundImage = null
         return
       @setThumbnail()
-    setThumbnail: (fileURL) ->
-      # XXX Opera does not support blob URL
+    setThumbnail: ->
       # Create a redimensioned thumbnail.
-      unless window.URL
-        unless fileURL
-          reader = new FileReader()
-          reader.onload = (e) =>
-            @setThumbnail e.target.result
-          reader.readAsDataURL @file
-          return
-      else
-        fileURL = URL.createObjectURL @file
-
       img = $.el 'img'
 
       img.onload = =>
@@ -591,7 +578,7 @@ QR =
         s *= 3 if @file.type is 'image/gif' # let them animate
         {height, width} = img
         if height < s or width < s
-          @URL = fileURL if window.URL
+          @URL = fileURL
           @nodes.el.style.backgroundImage = "url(#{@URL})"
           return
         if height <= width
@@ -604,10 +591,6 @@ QR =
         cv.height = img.height = height
         cv.width  = img.width  = width
         cv.getContext('2d').drawImage img, 0, 0, width, height
-        unless window.URL
-          @nodes.el.style.backgroundImage = "url(#{cv.toDataURL()})"
-          delete @URL
-          return
         URL.revokeObjectURL fileURL
         applyBlob = (blob) =>
           @URL = URL.createObjectURL blob
@@ -625,6 +608,7 @@ QR =
 
         applyBlob new Blob [ui8a], type: 'image/png'
 
+      fileURL = URL.createObjectURL @file
       img.src = fileURL
     rmFile: ->
       delete @file
@@ -633,7 +617,6 @@ QR =
       @nodes.el.style.backgroundImage = null
       @nodes.label.hidden = true if QR.spoiler
       @showFileData()
-      return unless window.URL
       URL.revokeObjectURL @URL
     showFileData: ->
       if @file
@@ -668,7 +651,7 @@ QR =
       e.dataTransfer.dropEffect = 'move'
     drop: ->
       el = $ '.drag', @parentNode
-      $.rmClass el, 'drag' # Opera doesn't fire dragEnd if we drop it on something else
+      $.rmClass el, 'drag'
       $.rmClass @,  'over'
       return unless @draggable
       index    = (el) -> [el.parentNode.children...].indexOf el
@@ -703,12 +686,8 @@ QR =
         img:       imgContainer.firstChild
         input:     input
 
-      if MutationObserver
-        observer = new MutationObserver @load.bind @
-        observer.observe @nodes.challenge,
-          childList: true
-      else
-        $.on @nodes.challenge, 'DOMNodeInserted', @load.bind @
+      new MutationObserver(@load.bind @).observe @nodes.challenge,
+        childList: true
 
       $.on imgContainer, 'click',   @reload.bind @
       $.on input,        'keydown', @keydown.bind @
@@ -839,10 +818,6 @@ QR =
     # Add empty mimeType to avoid errors with URLs selected in Window's file dialog.
     QR.mimeTypes.push ''
     nodes.fileInput.max = $('input[name=MAX_FILE_SIZE]').value
-    <% if (type !== 'userjs') { %>
-    # Opera's accept attribute is fucked up
-    nodes.fileInput.accept = "text/*, #{mimeTypes}"
-    <% } %>
 
     QR.spoiler = !!$ 'input[name=spoiler]'
     nodes.spoiler.hidden = !QR.spoiler
@@ -1021,11 +996,6 @@ QR =
     QR.status()
 
   response: ->
-    <% if (type === 'userjs') { %>
-    # The upload.onload callback is not called
-    # or at least not in time with Opera.
-    QR.req.upload.onload()
-    <% } %>
     {req} = QR
     delete QR.req
 
