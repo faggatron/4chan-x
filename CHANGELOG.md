@@ -1,3 +1,11 @@
+### 3.5.4 - *2013-06-11*
+
+- Fix regression.
+
+### 3.5.3 - *2013-06-11*
+
+- Minor fixes.
+
 ### 3.5.2 - *2013-06-01*
 
 - Fix minor regression.
