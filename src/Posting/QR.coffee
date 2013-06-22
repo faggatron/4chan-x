@@ -638,22 +638,17 @@ QR =
           QR.nodes.com.value    = @com
         @nodes.span.textContent = @com
       reader.readAsText file
-    dragStart: ->
-      $.addClass @, 'drag'
-    dragEnd: ->
-      $.rmClass @, 'drag'
-    dragEnter: ->
-      $.addClass @, 'over'
-    dragLeave: ->
-      $.rmClass @, 'over'
+    dragStart: -> $.addClass @, 'drag'
+    dragEnd:   -> $.rmClass  @, 'drag'
+    dragEnter: -> $.addClass @, 'over'
+    dragLeave: -> $.rmClass  @, 'over'
     dragOver: (e) ->
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
     drop: ->
-      el = $ '.drag', @parentNode
-      $.rmClass el, 'drag'
-      $.rmClass @,  'over'
+      $.rmClass @, 'over'
       return unless @draggable
+      el       = $ '.drag', @parentNode
       index    = (el) -> [el.parentNode.children...].indexOf el
       oldIndex = index el
       newIndex = index @
