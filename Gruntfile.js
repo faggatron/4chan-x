@@ -1,9 +1,8 @@
 module.exports = function(grunt) {
 
-  var pkg = grunt.file.readJSON('package.json');
   var concatOptions = {
     process: {
-      data: pkg
+      get data() { return grunt.config('pkg'); }
     }
   };
   var shellOptions = {
@@ -14,7 +13,7 @@ module.exports = function(grunt) {
 
   // Project configuration.
   grunt.initConfig({
-    pkg: pkg,
+    pkg: grunt.file.readJSON('package.json'),
     concat: {
       coffee: {
         options: concatOptions,
@@ -73,7 +72,7 @@ module.exports = function(grunt) {
       crx: {
         src: 'img/*.png',
         dest: 'builds/crx/',
-        expand: true,
+        expand:  true,
         flatten: true
       }
     },
@@ -85,6 +84,14 @@ module.exports = function(grunt) {
     },
     concurrent: {
       build: ['build-crx', 'build-userscript']
+    },
+    bump: {
+      options: {
+        updateConfigs: ['pkg'],
+        commit:    false,
+        createTag: false,
+        push:      false
+      }
     },
     shell: {
       commit: {
@@ -152,7 +159,9 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['build']);
 
   grunt.registerTask('set-build', 'Set the build type variable', function(type) {
+    var pkg  = grunt.config('pkg');
     pkg.type = type;
+    grunt.config('pkg', pkg);
     grunt.log.ok('pkg.type = %s', type);
   });
   grunt.registerTask('build', ['concurrent:build']);
@@ -173,22 +182,15 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('release', ['shell:commit', 'shell:push', 'build-crx', 'compress:crx']);
-  grunt.registerTask('patch',   ['bump',       'reloadPkg', 'updcl:3', 'release']);
-  grunt.registerTask('minor',   ['bump:minor', 'reloadPkg', 'updcl:2', 'release']);
-  grunt.registerTask('major',   ['bump:major', 'reloadPkg', 'updcl:1', 'release']);
-
-  grunt.registerTask('reloadPkg', 'Reload the package', function() {
-    // Update the `pkg` object with the new version.
-    pkg = grunt.file.readJSON('package.json');
-    grunt.config.data.pkg = concatOptions.process.data = pkg;
-    grunt.log.ok('pkg reloaded.');
-  });
+  grunt.registerTask('patch',   ['bump',       'updcl:3', 'release']);
+  grunt.registerTask('minor',   ['bump:minor', 'updcl:2', 'release']);
+  grunt.registerTask('major',   ['bump:major', 'updcl:1', 'release']);
 
   grunt.registerTask('updcl', 'Update the changelog', function(i) {
     // i is the number of #s for markdown.
+    var pkg = grunt.config('pkg');
     var version = new Array(+i + 1).join('#') + ' ' + pkg.version + ' - *' + grunt.template.today('yyyy-mm-dd') + '*';
     grunt.file.write('CHANGELOG.md', version + '\n\n' + grunt.file.read('CHANGELOG.md'));
     grunt.log.ok('Changelog updated for v' + pkg.version + '.');
   });
-
 };
